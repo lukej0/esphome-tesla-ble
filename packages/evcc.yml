@@ -76,37 +76,26 @@ text_sensor:
     name: "Charging State ISO"
     id: charging_state_iso
     icon: "mdi:ev-station"
-    lambda: |-
-      static const std::map<std::string, std::string> mapping = {
-        {"Disconnected", "A"},
-        {"Stopped",      "B"},
-        {"Complete",     "B"},
-        {"Charging",     "C"},
-        {"Starting",     "C"}
-      };
+lambda: |-
+  const int state = static_cast<int>(id(charging_state_raw).state);
 
-      const std::string& current_raw = id(charging_state).state;
-      auto it = mapping.find(current_raw);
+  switch (state) {
+    case CarServer_ChargeState_ChargingState_Disconnected_tag:
+      return {"A"};
 
-      std::string current;
-      if (it != mapping.end()) {
-        current = it->second;
-      } else {
-        current = "A";                    // Fail-Safe
-      }
+    case CarServer_ChargeState_ChargingState_Engaged_tag:
+    case CarServer_ChargeState_ChargingState_Stopped_tag:
+    case CarServer_ChargeState_ChargingState_Complete_tag:
+    case CarServer_ChargeState_ChargingState_NoPower_tag:
+      return {"B"};
 
-      // === Zustandswechsel-Erkennung ===
-      static std::string previous = "";   // store last state
+    case CarServer_ChargeState_ChargingState_Starting_tag:
+    case CarServer_ChargeState_ChargingState_Charging_tag:
+      return {"C"};
 
-      if (current == "A" && previous != "A" && previous != "") {
-        // Wechsel zu A erfolgt → Switch ausschalten
-        id(charger_evcc).turn_off();
-        ESP_LOGD("charging_iso", "ISO-state change to A (disconnected/absent) detected → turned off charger_evcc");
-      }
-
-      previous = current;   // Save current state for next iteration
-
-      return {current};
+    default:
+      return {"A"};
+  }
     update_interval: 5s
 
 script:
