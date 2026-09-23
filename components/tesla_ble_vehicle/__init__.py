@@ -65,6 +65,8 @@ SENSORS = {
         icon = "mdi:car", device_class = binary_sensor.DEVICE_CLASS_DOOR,),
     "charge_state": numeric (NumericSensorId.ChargeState,
         icon = "mdi:battery-medium", device_class = sensor.DEVICE_CLASS_BATTERY, unit_of_measurement = "%",),
+    "charging_state_raw": numeric (NumericSensorId.ChargingStateRaw,
+        icon = "mdi:state-machine", device_class="", unit_of_measurement="", accuracy_decimals=0,),    
     "odometer": numeric (NumericSensorId.Odometer,
         icon = "mdi:counter", device_class = sensor.DEVICE_CLASS_DISTANCE, accuracy_decimals = 2, unit_of_measurement = "mi",),
     "charge_distance_added": numeric (NumericSensorId.ChargeDistanceAdded,
