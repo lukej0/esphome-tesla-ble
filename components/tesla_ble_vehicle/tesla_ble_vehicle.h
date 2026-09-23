@@ -249,6 +249,7 @@ namespace esphome
         };
         enum class NumericSensorId : uint8_t {
             ChargeState,
+            ChargingStateRaw,
             Odometer,
             ChargeCurrent,
             ChargeVoltage,
