@@ -134,6 +134,11 @@ tesla_ble_vehicle:
   charging_state:
     id: "charging_state"
     name: "Charging state"
+  charging_state_raw:
+    id: charging_state_raw
+    name: "Charging state raw"
+    disabled_by_default: true
+    entity_category: diagnostic
   charge_port_latch_state:
     id: "charge_port_latch_state"
     name: "Charge port latch state"
