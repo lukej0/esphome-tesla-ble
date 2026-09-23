@@ -11,7 +11,8 @@ switch:
       - if:
           condition:
             - lambda: |-
-                return id(charging_state).state != "Complete";
+                return static_cast<int>(id(charging_state_raw).state) !=
+                    CarServer_ChargeState_ChargingState_Complete_tag;
           then:
             - switch.turn_on: sw_charger
             - logger.log: "charger_evcc → charger eingeschaltet"
@@ -23,7 +24,8 @@ switch:
       - if:
           condition:
             - lambda: |-
-                return id(charging_state).state != "Complete";
+                return static_cast<int>(id(charging_state_raw).state) !=
+                    CarServer_ChargeState_ChargingState_Complete_tag;
           then:
             - switch.turn_off: sw_charger
             - logger.log: "charger_evcc → charger ausgeschaltet"
@@ -43,27 +45,30 @@ number:
     min_value: 0
     max_value: $charging_amps_max
     step: 1.0
+
     set_action:
       - if:
           condition:
             - lambda: |-
-                return id(charging_state).state != "Complete";
+                return static_cast<int>(id(charging_state_raw).state) !=
+                    CarServer_ChargeState_ChargingState_Complete_tag;
           then:
             - lambda: |-
                 float value = x;
                 id(charging_amps_evcc).publish_state(value);
 
                 if (value < 5.0) {
-                  id(pending_charge_current) = value;   // Für das Script vorbereiten
+                  id(pending_charge_current) = value;
                   id(set_charge_current_evcc).execute();
                 } else {
                   id(charging_amps).make_call().set_value(value).perform();
-                  ESP_LOGD("charging_amps", "sent charging_amps_evcc → %.1f A", value);
+                  ESP_LOGD("charging_amps",
+                           "sent charging_amps_evcc → %.1f A",
+                           value);
                 }
           else:
             - logger.log:
-                format: "charging_amps_evcc: %.1f A blockiert (charging_state = %s)"
-                args: ['x', id(charging_state).state.c_str()]
+                format: "charging_amps_evcc: charging blocked"
                 level: WARN
 
 # charging state ISO will report the charing state in an ISO compliant way, mimicking a wall charger:
@@ -76,26 +81,26 @@ text_sensor:
     name: "Charging State ISO"
     id: charging_state_iso
     icon: "mdi:ev-station"
-lambda: |-
-  const int state = static_cast<int>(id(charging_state_raw).state);
-
-  switch (state) {
-    case CarServer_ChargeState_ChargingState_Disconnected_tag:
-      return {"A"};
-
-    case CarServer_ChargeState_ChargingState_Engaged_tag:
-    case CarServer_ChargeState_ChargingState_Stopped_tag:
-    case CarServer_ChargeState_ChargingState_Complete_tag:
-    case CarServer_ChargeState_ChargingState_NoPower_tag:
-      return {"B"};
-
-    case CarServer_ChargeState_ChargingState_Starting_tag:
-    case CarServer_ChargeState_ChargingState_Charging_tag:
-      return {"C"};
-
-    default:
-      return {"A"};
-  }
+    lambda: |-
+      const int state = static_cast<int>(id(charging_state_raw).state);
+    
+      switch (state) {
+        case CarServer_ChargeState_ChargingState_Disconnected_tag:
+          return {"A"};
+    
+        case CarServer_ChargeState_ChargingState_Engaged_tag:
+        case CarServer_ChargeState_ChargingState_Stopped_tag:
+        case CarServer_ChargeState_ChargingState_Complete_tag:
+        case CarServer_ChargeState_ChargingState_NoPower_tag:
+          return {"B"};
+    
+        case CarServer_ChargeState_ChargingState_Starting_tag:
+        case CarServer_ChargeState_ChargingState_Charging_tag:
+          return {"C"};
+    
+        default:
+          return {"A"};
+      }
     update_interval: 5s
 
 script:
