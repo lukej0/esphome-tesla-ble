@@ -385,6 +385,18 @@ namespace esphome
             {
                 return charging_state_raw_;
             }
+            
+            inline bool is_charging_state_complete () const
+            {
+                return charging_state_raw_ ==
+                    CarServer_ChargeState_ChargingState_Complete_tag;
+            }
+            
+            inline bool is_charging_state_known () const
+            {
+                return charging_state_raw_ !=
+                    CarServer_ChargeState_ChargingState_Unknown_tag;
+            }
             inline const ActionMessageDetail& get_action_detail (BLE_CarServer_VehicleAction action)
             { // Get the entry in the ACTION_SPECIFICS table corresponding to the action (we can't be sure of the order)
                 return ACTION_SPECIFICS[static_cast<size_t>(action)];
