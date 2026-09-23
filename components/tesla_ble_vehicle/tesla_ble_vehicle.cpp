@@ -1825,27 +1825,50 @@ namespace esphome
             }
             if (carserver_response.response_msg.vehicleData.charge_state.has_charging_state)
             {
-              switch (carserver_response.response_msg.vehicleData.charge_state.charging_state.which_type)
+              const auto raw_charging_state =
+                  carserver_response.response_msg.vehicleData.charge_state.charging_state.which_type;
+            
+              switch (raw_charging_state)
               {
                 case CarServer_ChargeState_ChargingState_Starting_tag:
                 case CarServer_ChargeState_ChargingState_Charging_tag:
-                  if (car_is_charging_ == NotCharging) {car_is_charging_ = ChargingJustStarted;} // Set to 1 when charging starts to trigger immediate poll
+                  if (car_is_charging_ == NotCharging)
+                  {
+                    car_is_charging_ = ChargingJustStarted;
+                  }
                   break;
+            
                 case CarServer_ChargeState_ChargingState_Unknown_tag:
                 case CarServer_ChargeState_ChargingState_Disconnected_tag:
                 case CarServer_ChargeState_ChargingState_NoPower_tag:
                 case CarServer_ChargeState_ChargingState_Stopped_tag:
-                  publishSensor (NumericSensorId::MinsToLimit, NAN); // If not charging, minutes to limit makes no sense
+                  publishSensor(NumericSensorId::MinsToLimit, NAN);
                   [[fallthrough]];
-                  default:
+            
+                default:
                   car_is_charging_ = NotCharging;
               }
-              charging_state_raw_ = carserver_response.response_msg.vehicleData.charge_state.charging_state.which_type;
-              std::string charging_state_text = lookup_charging_state (carserver_response.response_msg.vehicleData.charge_state.charging_state.which_type);
-              publishSensor (TextSensorId::ChargingState, charging_state_text.c_str());
+            
+              // Keep the raw value for internal logic.
+              charging_state_raw_ = raw_charging_state;
+            
+              // Publish it as a language-independent ESPHome sensor.
+              publishSensor(
+                  NumericSensorId::ChargingStateRaw,
+                  static_cast<float>(raw_charging_state)
+              );
+            
+              // This remains the user-facing, translatable sensor.
+              std::string charging_state_text = lookup_charging_state(raw_charging_state);
+              publishSensor(TextSensorId::ChargingState, charging_state_text.c_str());
+            
               if (charger_switch_ != nullptr)
               {
-                charger_switch_->publish_state ((charging_state_text == "Charging") or (charging_state_text == "Starting") or (charging_state_text == "Calibrating"));
+                charger_switch_->publish_state(
+                    charging_state_text == "Charging" ||
+                    charging_state_text == "Starting" ||
+                    charging_state_text == "Calibrating"
+                );
               }
             }
             else
